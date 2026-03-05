@@ -1,31 +1,185 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="es">
 <head>
-<title>PokerFlow</title>
-<style>
-body{
-background:#0f172a;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-margin:0;
-font-family:Arial;
-color:white;
-flex-direction:column;
-}
-img{
-max-width:300px;
-margin-bottom:20px;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PokerFlow</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --ink:#fff;
+
+      /* Ajusta estas 6 variables para encajar los ojos en tu PNG */
+      --eye-size: 44px;         /* diámetro del “blanco” del ojo */
+      --pupil-size: 16px;       /* diámetro de la pupila */
+      --eye1-x: 92px;           /* posición del ojo izq dentro del chip */
+      --eye1-y: 84px;
+      --eye2-x: 136px;          /* posición del ojo der dentro del chip */
+      --eye2-y: 84px;
+
+      --pupil-max: 10px;        /* cuanto se mueve la pupila dentro del ojo */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      display:grid;
+      place-items:center;
+      background: var(--bg);
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--ink);
+    }
+
+    /* Fondo tipo damero */
+    .bg{
+      position:fixed; inset:0;
+      background:
+        linear-gradient(45deg, rgba(255,255,255,.05) 25%, transparent 25%) 0 0/90px 90px,
+        linear-gradient(-45deg, rgba(255,255,255,.05) 25%, transparent 25%) 0 0/90px 90px,
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.03) 75%) 0 0/90px 90px,
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.03) 75%) 0 0/90px 90px;
+      opacity:.9;
+    }
+
+    .wrap{
+      width:min(520px, 90vw);
+      height:min(720px, 92vh);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:space-between;
+      padding:42px 20px 54px;
+      position:relative;
+      z-index:2;
+    }
+
+    /* Contenedor de la ficha */
+    .chip-wrap{
+      position:relative;
+      width:220px;
+      height:220px;
+      filter: drop-shadow(0 16px 28px rgba(0,0,0,.55));
+      user-select:none;
+    }
+
+    /* Tu PNG arriba (con ojos transparentes) */
+    .chip-img{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      z-index:3;
+      pointer-events:none;
+    }
+
+    /* Capa de ojos detrás del PNG */
+    .eyes-layer{
+      position:absolute;
+      inset:0;
+      z-index:2; /* debajo de la imagen */
+      pointer-events:none;
+    }
+
+    .eye{
+      position:absolute;
+      width:var(--eye-size);
+      height:var(--eye-size);
+      border-radius:999px;
+      background: #fff;
+      box-shadow: inset 0 -4px 10px rgba(0,0,0,.08);
+      overflow:hidden;
+    }
+
+    /* Pupila */
+    .pupil{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:var(--pupil-size);
+      height:var(--pupil-size);
+      transform: translate(-50%,-50%);
+      border-radius:999px;
+      background: #111;
+      box-shadow: 0 3px 10px rgba(0,0,0,.35);
+      will-change: transform;
+    }
+
+    /* Posiciones (ajústalas) */
+    .eye.eye1{ left: var(--eye1-x); top: var(--eye1-y); }
+    .eye.eye2{ left: var(--eye2-x); top: var(--eye2-y); }
+
+    .logo{
+      font-size:56px;
+      font-weight:800;
+      letter-spacing:-1px;
+      opacity:.95;
+    }
+  </style>
 </head>
+
 <body>
+  <div class="bg"></div>
 
-<img src="logo.png">
+  <div class="wrap" id="stage">
 
-<h1>PokerFlow</h1>
-<p>AI-powered poker training</p>
+    <div class="chip-wrap" id="chip">
+      <div class="eyes-layer">
+        <div class="eye eye1" data-eye="1"><div class="pupil" id="p1"></div></div>
+        <div class="eye eye2" data-eye="2"><div class="pupil" id="p2"></div></div>
+      </div>
 
+      <!-- Cambia chip.png por tu fichero real -->
+      <img class="chip-img" src="chip.png" alt="Poker chip" />
+    </div>
+
+    <div class="logo">PokerFlow</div>
+  </div>
+
+  <script>
+    const stage = document.getElementById('stage');
+    const eyes = [...document.querySelectorAll('.eye')];
+
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    function updatePupil(eyeEl, clientX, clientY){
+      const pupil = eyeEl.querySelector('.pupil');
+      const r = eyeEl.getBoundingClientRect();
+
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+
+      // Normalizamos dirección
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+
+      // Distancia máxima dentro del ojo
+      const max = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pupil-max')) || 10;
+
+      const px = ux * max;
+      const py = uy * max;
+
+      // Movemos la pupila (desde el centro)
+      pupil.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+    }
+
+    function onMove(e){
+      const x = e.clientX;
+      const y = e.clientY;
+      eyes.forEach(eye => updatePupil(eye, x, y));
+    }
+
+    window.addEventListener('mousemove', onMove, {passive:true});
+    window.addEventListener('touchmove', (e)=>{
+      if(!e.touches[0]) return;
+      onMove(e.touches[0]);
+    }, {passive:true});
+  </script>
 </body>
 </html>
