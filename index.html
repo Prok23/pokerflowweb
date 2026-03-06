@@ -1,48 +1,391 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PokerFlow</title>
+  <title>PokerFlow | Learn Poker Fast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root{
-      /* AJUSTA ESTO A OJO */
-      --chip-size: 320px;
+      --chip-size: clamp(240px, 31vw, 380px);
 
-      --eye-w: 86px;      /* blanco del ojo */
-      --eye-h: 46px;
-      --pupil: 18px;      /* tamaño pupila */
-      --pupil-max: 10px;  /* cuánto se mueve */
+      --eye-w: calc(var(--chip-size) * 0.26875);
+      --eye-h: calc(var(--chip-size) * 0.14375);
+      --pupil: calc(var(--chip-size) * 0.075);
+      --pupil-max-x: calc(var(--chip-size) * 0.058);
+      --pupil-max-up: calc(var(--chip-size) * 0.058);
+      --pupil-max-down: calc(var(--chip-size) * 0.013);
+      --pupil-follow-radius: calc(var(--chip-size) * 0.64);
+      --pupil-neutral-y: calc(var(--chip-size) * -0.009);
 
-      /* Posición de cada ojo dentro del chip (en px) */
-      --eyeL-x: 96px;
-      --eyeL-y: 136px;
+      --eyeL-x: calc(var(--chip-size) * 0.203125);
+      --eyeL-y: calc(var(--chip-size) * 0.425);
+      --eyeR-x: calc(var(--chip-size) * 0.515625);
+      --eyeR-y: calc(var(--chip-size) * 0.425);
 
-      --eyeR-x: 186px;
-      --eyeR-y: 136px;
+      --mx: 50vw;
+      --my: 50vh;
+      --scene-x: 0px;
+      --scene-y: 0px;
+
+      --bg0: #030912;
+      --bg1: #061628;
+      --bg2: #030f22;
+      --text: #f3f7ff;
+      --muted: #93a6c5;
+      --accent: #ff4d3f;
+      --accent-2: #ff2918;
+      --cold: #67b8ff;
+      --line: rgba(168, 201, 247, 0.3);
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      width:100%;
+      min-height:100%;
     }
 
     body{
       margin:0;
-      height:100vh;
-      display:grid;
-      place-items:center;
-      background: radial-gradient(1200px 700px at 50% 20%, #141a22, #0b0f14 70%);
-      color:white;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
+      font-family:"Manrope", "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(720px 460px at var(--mx) var(--my), rgba(255, 77, 64, 0.16), transparent 62%),
+        radial-gradient(980px 640px at 8% 12%, rgba(17, 47, 77, 0.8), transparent 72%),
+        radial-gradient(980px 720px at 92% 88%, rgba(9, 34, 63, 0.8), transparent 70%),
+        linear-gradient(168deg, var(--bg0), var(--bg1) 52%, var(--bg2));
+      overflow-x:hidden;
     }
 
-    .wrap{
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-size: 118px 118px;
+      mask-image: radial-gradient(circle at 55% 28%, #000 8%, transparent 76%);
+      opacity:0.14;
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:-22%;
+      z-index:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 24% 24%, rgba(255, 79, 64, 0.23), transparent 43%),
+        radial-gradient(circle at 79% 72%, rgba(103, 184, 255, 0.18), transparent 42%);
+      filter: blur(86px);
+      animation: drift 13s ease-in-out infinite alternate;
+    }
+
+    .topbar{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      z-index:15;
+      width:min(1140px, 92vw);
+      height:80px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .brand{
+      color:#fff;
+      text-decoration:none;
+      font-family:"Syne", "Manrope", sans-serif;
+      font-size:36px;
+      line-height:1;
+      letter-spacing:-0.04em;
+      font-weight:800;
+    }
+
+    .alpha{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      height:34px;
+      padding:0 14px;
+      border-radius:999px;
+      font-size:11px;
+      letter-spacing:0.11em;
+      font-weight:800;
+      text-transform:uppercase;
+      color:#ebf3ff;
+      border:1px solid rgba(255,255,255,0.22);
+      backdrop-filter: blur(8px);
+      background: rgba(7, 17, 30, 0.5);
+    }
+
+    .alpha::before{
+      content:"";
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:var(--accent);
+      box-shadow: 0 0 14px rgba(255, 77, 64, 0.8);
+    }
+
+    .hero{
+      position:relative;
+      z-index:1;
+      width:min(1140px, 92vw);
+      min-height:100vh;
+      margin:0 auto;
+      padding-top:88px;
+      display:grid;
+      grid-template-columns:minmax(0, 1.03fr) minmax(300px, 0.97fr);
+      align-items:center;
+      gap:16px;
+    }
+
+    .copy{
+      max-width:610px;
       display:flex;
       flex-direction:column;
-      align-items:center;
       gap:18px;
+      animation: rise 760ms cubic-bezier(.2,.7,.3,1) both;
+    }
+
+    .kicker{
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#d8e6ff;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+    }
+
+    .kicker::before{
+      content:"";
+      width:42px;
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(208, 227, 255, 0.9));
+    }
+
+    h1{
+      margin:0;
+      font-family:"Syne", "Manrope", sans-serif;
+      font-size:clamp(56px, 9vw, 138px);
+      line-height:0.86;
+      letter-spacing:-0.05em;
+      text-transform:uppercase;
+      max-width:10.2ch;
+      text-wrap:balance;
+    }
+
+    .title-main{
+      display:block;
+      color:#eff6ff;
+      text-shadow: 0 18px 42px rgba(3, 12, 28, 0.5);
+    }
+
+    .title-accent{
+      display:block;
+      background:linear-gradient(180deg, #ff8d83 0%, #ff4f3e 62%, #ff2a1a 100%);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      text-shadow:none;
+    }
+
+    .sub{
+      margin:0;
+      max-width:48ch;
+      color:var(--muted);
+      font-size:clamp(16px, 1.8vw, 21px);
+      line-height:1.5;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:4px;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:48px;
+      padding:0 20px;
+      border-radius:999px;
+      text-decoration:none;
+      font-weight:700;
+      letter-spacing:0.01em;
+      transition: transform 130ms ease, box-shadow 170ms ease, opacity 170ms ease;
+    }
+
+    .btn:hover{ transform: translateY(-2px); }
+
+    .btn.primary{
+      color:#fff;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 16px 30px rgba(255, 57, 37, 0.36);
+    }
+
+    .btn.secondary{
+      color:#e8f1ff;
+      border:1px solid rgba(197, 219, 250, 0.42);
+      background: rgba(9, 18, 32, 0.32);
+      backdrop-filter: blur(7px);
+    }
+
+    .micro{
+      margin:0;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:9px 12px;
+      color:#c9daf4;
+      font-size:13px;
+      font-weight:600;
+      letter-spacing:0.02em;
+    }
+
+    .micro span{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      opacity:0.9;
+    }
+
+    .micro span::before{
+      content:"";
+      width:5px;
+      height:5px;
+      border-radius:50%;
+      background:rgba(201, 218, 244, 0.75);
+    }
+
+    .visual{
+      position:relative;
+      display:grid;
+      place-items:center;
+      animation: rise 880ms cubic-bezier(.2,.7,.3,1) both 120ms;
+    }
+
+    .chip-scene{
+      position:relative;
+      width:clamp(320px, 42vw, 560px);
+      aspect-ratio:1;
+      display:grid;
+      place-items:center;
+      transform: translate3d(calc(var(--scene-x) * 0.35), calc(var(--scene-y) * 0.35), 0);
+      transition: transform 180ms ease-out;
+    }
+
+    .chip-scene::before,
+    .chip-scene::after{
+      content:"";
+      position:absolute;
+      border-radius:50%;
+      pointer-events:none;
+    }
+
+    .chip-scene::before{
+      inset:6%;
+      background:radial-gradient(circle, rgba(255, 82, 72, 0.23), transparent 66%);
+      filter: blur(20px);
+      opacity:0.8;
+      transform: translate3d(calc(var(--scene-x) * -0.3), calc(var(--scene-y) * -0.3), 0);
+    }
+
+    .chip-scene::after{
+      width:72%;
+      height:18%;
+      bottom:8%;
+      background:radial-gradient(circle, rgba(0,0,0,0.66), transparent 72%);
+      filter: blur(10px);
+    }
+
+    .orbit,
+    .orbit2{
+      position:absolute;
+      border-radius:50%;
+      pointer-events:none;
+    }
+
+    .orbit{
+      inset:13%;
+      border:1px solid rgba(188, 216, 255, 0.24);
+      transform: rotate(16deg);
+      animation: spin 16s linear infinite;
+    }
+
+    .orbit2{
+      inset:2%;
+      border:1px dashed rgba(255, 116, 102, 0.36);
+      transform: rotate(-12deg);
+      animation: spin-rev 19s linear infinite;
+    }
+
+    .float-tag{
+      position:absolute;
+      z-index:2;
+      color:#dcebff;
+      font-size:11px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      font-weight:700;
+      text-shadow: 0 0 22px rgba(142, 193, 255, 0.6);
+      white-space:nowrap;
+      user-select:none;
+    }
+
+    .float-tag::before{
+      content:"";
+      display:inline-block;
+      width:5px;
+      height:5px;
+      margin-right:6px;
+      border-radius:50%;
+      background:rgba(239, 246, 255, 0.85);
+      vertical-align:middle;
+    }
+
+    .t1{ top:12%; left:1%; animation: bob1 4.5s ease-in-out infinite; }
+    .t2{ top:6%; right:10%; animation: bob2 5.2s ease-in-out infinite; }
+    .t3{ bottom:24%; left:0%; animation: bob3 4.8s ease-in-out infinite; }
+    .t4{ bottom:12%; right:4%; animation: bob4 5.6s ease-in-out infinite; }
+
+    .chip-shell{
+      width:var(--chip-size);
+      height:var(--chip-size);
+      display:grid;
+      place-items:center;
+      animation: hover 5.2s ease-in-out infinite;
+    }
+
+    .chip-tilt{
+      width:100%;
+      height:100%;
+      display:grid;
+      place-items:center;
+      transform-style:preserve-3d;
+      transition: transform 130ms ease-out;
     }
 
     .chip{
       position:relative;
-      width:var(--chip-size);
-      height:var(--chip-size);
+      width:100%;
+      height:100%;
+      filter: drop-shadow(0 26px 42px rgba(2, 4, 11, 0.64));
       user-select:none;
     }
 
@@ -55,8 +398,6 @@
       pointer-events:none;
     }
 
-    /* Si tus ojos son TRANSPARENTES: deja el blanco visible.
-       Si NO son transparentes todavía, pon opacity:0; para no ver el blanco. */
     .eye{
       position:absolute;
       width:var(--eye-w);
@@ -65,8 +406,6 @@
       border-radius:999px;
       overflow:hidden;
       z-index:2;
-      /* Si AÚN no has hecho los ojos transparentes, descomenta esto: */
-      /* opacity: 0; */
     }
 
     .eye.left{ left:var(--eyeL-x); top:var(--eyeL-y); }
@@ -76,63 +415,278 @@
       position:absolute;
       width:var(--pupil);
       height:var(--pupil);
-      background:#111;
+      background:#0b0f14;
       border-radius:999px;
       left:50%;
       top:50%;
-      transform: translate(-50%,-50%);
+      transform: translate(-50%, -50%);
+      transition: transform 92ms cubic-bezier(.22,1,.36,1);
+      will-change: transform;
     }
 
-    h1{
-      margin:0;
-      letter-spacing:.2px;
-      font-weight:800;
+    .footer{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:16px;
+      z-index:1;
+      text-align:center;
+      color:#7d91b1;
+      font-size:11px;
+      letter-spacing:0.09em;
+      text-transform:uppercase;
+      pointer-events:none;
     }
 
-    p{
-      margin:0;
-      opacity:.75;
-      font-size:14px;
+    @media (max-width: 980px){
+      .hero{
+        grid-template-columns:1fr;
+        gap:4px;
+        padding-top:84px;
+      }
+
+      .copy{
+        margin-inline:auto;
+        align-items:center;
+        text-align:center;
+      }
+
+      h1{
+        max-width:11.5ch;
+      }
+
+      .micro,
+      .actions{
+        justify-content:center;
+      }
+
+      .kicker::before{
+        display:none;
+      }
+
+      .visual{
+        margin-top:-6px;
+      }
+    }
+
+    @media (max-width: 560px){
+      .topbar{
+        width:94vw;
+        height:68px;
+      }
+
+      .brand{
+        font-size:31px;
+      }
+
+      .alpha{
+        padding:0 11px;
+      }
+
+      .hero{
+        width:94vw;
+        padding-top:76px;
+      }
+
+      .chip-scene{
+        width:min(100%, 430px);
+      }
+
+      .t2,
+      .t4{
+        right:0;
+      }
+
+      .btn{
+        flex:1 1 160px;
+      }
+    }
+
+    @keyframes rise{
+      from{ opacity:0; transform: translateY(14px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    @keyframes hover{
+      0%, 100%{ transform: translateY(0px); }
+      50%{ transform: translateY(-8px); }
+    }
+
+    @keyframes spin{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
+
+    @keyframes spin-rev{
+      from{ transform: rotate(360deg); }
+      to{ transform: rotate(0deg); }
+    }
+
+    @keyframes drift{
+      from{ transform: translate(-1.4%, -1.1%) scale(1); }
+      to{ transform: translate(1.8%, 1.4%) scale(1.04); }
+    }
+
+    @keyframes bob1{
+      0%,100%{ transform: translateY(0px); }
+      50%{ transform: translateY(-7px); }
+    }
+
+    @keyframes bob2{
+      0%,100%{ transform: translateY(0px); }
+      50%{ transform: translateY(-9px); }
+    }
+
+    @keyframes bob3{
+      0%,100%{ transform: translateY(0px); }
+      50%{ transform: translateY(-6px); }
+    }
+
+    @keyframes bob4{
+      0%,100%{ transform: translateY(0px); }
+      50%{ transform: translateY(-8px); }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="chip" id="chip">
-      <div class="eye left"><div class="pupil"></div></div>
-      <div class="eye right"><div class="pupil"></div></div>
-      <img src="chip.png" alt="PokerFlow chip" />
-    </div>
+  <header class="topbar">
+    <a class="brand" href="#">PokerFlow</a>
+    <span class="alpha">Private Alpha</span>
+  </header>
 
-    <div style="text-align:center">
-      <h1>PokerFlow</h1>
-      <p>From zero to flow.</p>
-    </div>
-  </div>
+  <main class="hero">
+    <section class="copy">
+      <p class="kicker">Poker learning platform</p>
+      <h1>
+        <span class="title-main">From 2</span>
+        <span class="title-accent">to ACE</span>
+      </h1>
+      <p class="sub">Duolingo-style poker training for real decision-making: short drills, range reading and full-hand simulation loops that keep beginners improving.</p>
+
+      <div class="actions">
+        <a class="btn primary" href="#">Join waitlist</a>
+        <a class="btn secondary" href="#">Watch teaser</a>
+      </div>
+
+    </section>
+
+    <section class="visual">
+      <div class="chip-scene" id="chipScene">
+        <div class="orbit"></div>
+        <div class="orbit2"></div>
+
+        <span class="float-tag t1">Gamified</span>
+        <span class="float-tag t2">Range coach</span>
+        <span class="float-tag t3">Cognitive training</span>
+        <span class="float-tag t4">Real transfer</span>
+
+        <div class="chip-shell">
+          <div class="chip-tilt" id="chipTilt">
+            <div class="chip">
+              <div class="eye left"><div class="pupil"></div></div>
+              <div class="eye right"><div class="pupil"></div></div>
+              <img src="chip.png" alt="PokerFlow mascot chip" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <p class="footer">PokerFlow 2026 | Learn. Drill. Compete.</p>
 
   <script>
+    const root = document.documentElement;
     const pupils = document.querySelectorAll(".pupil");
+    const chipTilt = document.getElementById("chipTilt");
+    const chipScene = document.getElementById("chipScene");
+    const DEFAULT_CURSOR = { x: 511, y: 471 };
 
-    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+    function clamp(n, min, max){
+      return Math.max(min, Math.min(max, n));
+    }
 
-    document.addEventListener("mousemove", (e) => {
-      pupils.forEach(pupil => {
+    function readCssNumber(name, fallback){
+      const value = parseFloat(getComputedStyle(root).getPropertyValue(name));
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function projectToEllipse(nx, ny, intensity, maxX, maxUp, maxDown){
+      const safeNx = clamp(nx, -1, 1);
+      const safeNy = clamp(ny, -1, 1);
+      const xRadius = maxX * intensity;
+      const yRadius = (safeNy < 0 ? maxUp : maxDown) * intensity;
+
+      return {
+        x: safeNx * xRadius,
+        y: safeNy * yRadius
+      };
+    }
+
+    function updateChipMotion(cursorX, cursorY){
+      if (!chipTilt || !chipScene){
+        return;
+      }
+
+      const r = chipScene.getBoundingClientRect();
+      const dx = (cursorX - (r.left + r.width / 2)) / r.width;
+      const dy = (cursorY - (r.top + r.height / 2)) / r.height;
+
+      const tiltX = clamp(-dy * 16, -8, 8);
+      const tiltY = clamp(dx * 18, -10, 10);
+
+      chipTilt.style.transform = `perspective(980px) rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg)`;
+      root.style.setProperty("--scene-x", `${(dx * 18).toFixed(2)}px`);
+      root.style.setProperty("--scene-y", `${(dy * 14).toFixed(2)}px`);
+    }
+
+    function updateEyes(cursorX, cursorY){
+      root.style.setProperty("--mx", `${Math.round(cursorX)}px`);
+      root.style.setProperty("--my", `${Math.round(cursorY)}px`);
+
+      const maxX = readCssNumber("--pupil-max-x", 18);
+      const maxUp = readCssNumber("--pupil-max-up", 18);
+      const maxDown = readCssNumber("--pupil-max-down", 4);
+      const followRadius = readCssNumber("--pupil-follow-radius", 190);
+      const neutralY = readCssNumber("--pupil-neutral-y", -3);
+
+      pupils.forEach((pupil) => {
         const eye = pupil.parentElement;
         const r = eye.getBoundingClientRect();
-        const cx = r.left + r.width/2;
-        const cy = r.top + r.height/2;
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
 
-        const dx = e.clientX - cx;
-        const dy = e.clientY - cy;
+        const dx = cursorX - cx;
+        const dy = cursorY - cy;
+        const dist = Math.hypot(dx, dy) || 1;
 
-        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-        const max = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pupil-max")) || 10;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const intensity = clamp(dist / followRadius, 0, 1);
+        const { x, y } = projectToEllipse(nx, ny, intensity, maxX, maxUp, maxDown);
 
-        const x = clamp((dx/dist) * max, -max, max);
-        const y = clamp((dy/dist) * max, -max, max);
-
-        pupil.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        pupil.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y + neutralY}px))`;
       });
+
+      updateChipMotion(cursorX, cursorY);
+    }
+
+    document.addEventListener("pointermove", (e) => {
+      updateEyes(e.clientX, e.clientY);
+    }, { passive: true });
+
+    window.addEventListener("blur", () => {
+      updateEyes(DEFAULT_CURSOR.x, DEFAULT_CURSOR.y);
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible"){
+        updateEyes(DEFAULT_CURSOR.x, DEFAULT_CURSOR.y);
+      }
+    });
+
+    requestAnimationFrame(() => {
+      updateEyes(DEFAULT_CURSOR.x, DEFAULT_CURSOR.y);
     });
   </script>
 </body>
